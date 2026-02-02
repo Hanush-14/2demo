@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        MAVEN_HOME = '/usr/local/maven' // Set the path to Maven if needed
-        JAVA_HOME = '/usr/lib/jvm/java-11-openjdk-amd64' // Set the path to Java if needed
+        MAVEN_HOME = '/usr/local/maven'  // Set the path to Maven if needed
+        JAVA_HOME = '/usr/lib/jvm/java-11-openjdk-amd64'  // Set the path to Java (update based on your system)
     }
 
     stages {
