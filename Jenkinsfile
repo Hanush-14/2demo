@@ -2,52 +2,69 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "hanush14/sam123"
+        DOCKER_IMAGE = 'my-spring-app:latest'  // Replace with your image name
+        REMOTE_SERVER = 'my-remote-server'    // Replace with your Jenkins remote server name
     }
 
     stages {
-
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/Hanush-14/2demo.git'
+                // Pull the latest code from GitHub
+                git 'https://github.com/Hanush-14/2demo.git'
             }
         }
 
-        stage('Maven Build'){
-          steps{
-                ssh 'mvn clean package'
-                }
+        stage('Build with Maven') {
+            steps {
+                // Build the project using Maven
+                sh 'mvn clean package'
+            }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build("${IMAGE_NAME}:latest")
+                    // Build the Docker image (optional stage)
+                    // Make sure your Dockerfile is properly set up for the image
+                    sh 'docker build -t $DOCKER_IMAGE .'
                 }
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Deploy to Remote Server') {
+            steps {
+                // SSH into the remote server and run the build command
+                ssh(
+                    remote: REMOTE_SERVER,  // Replace with your Jenkins configured remote server
+                    command: 'mvn clean package'  // Run on the remote server
+                )
+            }
+        }
+
+        stage('Push Docker Image') {
             steps {
                 script {
-                    docker.with.Registry('https"//index.docker.io/v1/','dockerhub'){
-                    dockerImage.push()\
-                    }
+                    // If you want to push the Docker image to DockerHub or your registry
+                    // Uncomment the following line and replace with your registry details
+                    // sh 'docker push my-spring-app:latest'
                 }
             }
         }
+
     }
 
     post {
+        always {
+            // Clean up workspace after build
+            cleanWs()
+        }
         success {
-            echo "Pipeline succeeded!"
+            // Notify when the build is successful
+            echo 'Build succeeded!'
         }
         failure {
-            echo "Pipeline failed!"
-        }
-        always {
-            deleteDir()
+            // Notify when the build fails
+            echo 'Build failed!'
         }
     }
 }
