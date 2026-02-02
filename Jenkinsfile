@@ -3,57 +3,53 @@ pipeline {
 
     stages {
 
-        stage('Checkout SCM') {
+        stage('Checkout Source Code') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Build with Maven') {
+        stage('Build & Test using Maven') {
             steps {
-                script {
-                    sh 'java -version'
-                    sh 'mvn -version'
-
-                    if (env.BRANCH_NAME == 'main') {
-                        sh 'mvn clean package'
-                    } else if (env.BRANCH_NAME == 'dev') {
-                        sh 'mvn clean install'
-                    } else {
-                        sh 'mvn clean verify'
-                    }
-                }
+                echo 'Building Java application using Maven'
+                sh 'java -version'
+                sh 'mvn -version'
+                sh 'mvn clean package'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    def tag = env.BRANCH_NAME ?: 'latest'
-                    sh "docker build -t my-app:${tag} ."
-                }
+                echo 'Building Docker image'
+                sh 'docker build -t my-spring-app:latest .'
             }
         }
 
-        stage('Deploy to Remote Server') {
-            when {
-                expression { false }   // 🔒 disabled safely
-            }
+        stage('Deploy to Docker Swarm') {
             steps {
-                echo 'Deploy stage disabled'
+                echo 'Deploying application to Docker Swarm'
+                sh '''
+                    docker service rm my-spring-service || true
+
+                    docker service create \
+                      --name my-spring-service \
+                      --replicas 2 \
+                      -p 8080:8080 \
+                      my-spring-app:latest
+                '''
             }
         }
     }
 
     post {
-        always {
-            cleanWs()
-        }
         success {
-            echo '✅ PIPELINE SUCCESS'
+            echo '✅ CI/CD Pipeline executed successfully'
         }
         failure {
-            echo '❌ PIPELINE FAILED'
+            echo '❌ Pipeline failed'
+        }
+        always {
+            cleanWs()
         }
     }
 }
