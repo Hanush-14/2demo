@@ -2,85 +2,56 @@ pipeline {
     agent any
 
     environment {
-        // Set JAVA_HOME and MAVEN_HOME paths (adjust if needed)
-        JAVA_HOME = '/usr/lib/jvm/java-11-openjdk-amd64'  // Adjust based on your system
-        MAVEN_HOME = '/usr/local/maven'  // Set the path to Maven if needed
-
-        // Ensure the PATH variable includes Maven and Java binaries
+        JAVA_HOME = '/usr/lib/jvm/java-11-openjdk-amd64'
+        MAVEN_HOME = '/usr/local/maven'
         PATH = "${JAVA_HOME}/bin:${MAVEN_HOME}/bin:${env.PATH}"
     }
 
-    tools {
-        // Ensure to specify Maven and JDK if configured globally in Jenkins
-        jdk 'OpenJDK 11'  // This should match your Global Tool Configuration name
-        maven 'Maven 3.6.3'  // This should match your Global Tool Configuration name
-    }
-
     stages {
-        // Stage 1: Checkout the source code from GitHub repository
+
         stage('Checkout SCM') {
             steps {
-                // Checkout the source code from the Git repository
                 checkout scm
             }
         }
 
-        // Stage 2: Build with Maven
         stage('Build with Maven') {
             steps {
                 script {
-                    // Build different branches with different Maven goals
+                    sh 'java -version'
+                    sh 'mvn -version'
+
                     if (env.BRANCH_NAME == 'main') {
-                        echo "Building main branch with mvn clean package"
-                        sh 'mvn clean package' // Use Maven clean package for the main branch
+                        sh 'mvn clean package'
                     } else if (env.BRANCH_NAME == 'dev') {
-                        echo "Building dev branch with mvn clean install"
-                        sh 'mvn clean install' // Use Maven clean install for dev branch
+                        sh 'mvn clean install'
                     } else {
-                        echo "Building other branch with mvn clean verify"
-                        sh 'mvn clean verify' // Default build command for other branches
+                        sh 'mvn clean verify'
                     }
                 }
             }
         }
 
-        // Stage 3: Build Docker Image (Optional - Can be skipped based on requirements)
         stage('Build Docker Image') {
             steps {
-                script {
-                    // Example: Build the Docker image using a Dockerfile
-                    echo "Building Docker image for branch ${env.BRANCH_NAME}"
-                    sh 'docker build -t my-app:${env.BRANCH_NAME} .' // Customize based on your requirements
-                }
+                sh 'docker build -t my-app:${BRANCH_NAME} .'
             }
         }
 
-        // Stage 4: Deploy to Remote Server (Optional - Can be skipped based on requirements)
         stage('Deploy to Remote Server') {
             steps {
-                script {
-                    // Example: Deploy the application to a remote server
-                    echo "Deploying to remote server for branch ${env.BRANCH_NAME}"
-                    sh 'scp target/my-app.jar user@remote-server:/path/to/deploy' // Customize based on your environment
-                }
+                sh 'scp target/*.jar user@remote-server:/path/to/deploy'
             }
         }
-
     }
 
     post {
-        // Cleanup workspace after the build, always runs even if the build fails
         always {
-            echo 'Cleaning up workspace...'
-            cleanWs() // Cleans the workspace to remove any leftover files
+            cleanWs()
         }
-
-        // Notify on success
         success {
-            echo 'Build completed successfully!'
+            echo 'Build successful!'
         }
-
-        // Notify on failure
         failure {
             echo 'Build failed!'
         }
