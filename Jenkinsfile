@@ -1,16 +1,17 @@
 pipeline {
     agent any
-
     environment {
-        REMOTE_HOST = 'your-remote-host'      // Replace with your remote server
-        REMOTE_USER = 'your-ssh-username'     // Replace with your SSH username
-        DOCKER_IMAGE = 'my-spring-app:latest'
+        GIT_REPO = 'https://github.com/Hanush-14/2demo.git'
+        BRANCH_NAME = 'main'   // Ensure this is the right branch
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/Hanush-14/2demo.git'
+                checkout([$class: 'GitSCM', 
+                          branches: [[name: "*/${BRANCH_NAME}"]], 
+                          userRemoteConfigs: [[url: "${GIT_REPO}"]]
+                ])
             }
         }
 
@@ -22,19 +23,13 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                sh 'docker build -t my-spring-app:latest .'
             }
         }
 
         stage('Deploy to Remote Server') {
             steps {
-                sshCommand remote: [
-                    name: 'REMOTE',           // Jenkins SSH server name configured in credentials
-                    host: "${REMOTE_HOST}",
-                    user: "${REMOTE_USER}",
-                    allowAnyHosts: true       // Avoid host verification issues
-                ],
-                command: 'mvn clean package'
+                // Add your SSH or other deployment commands here
             }
         }
     }
