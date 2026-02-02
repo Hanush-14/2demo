@@ -2,8 +2,18 @@ pipeline {
     agent any
 
     environment {
+        // Set JAVA_HOME and MAVEN_HOME paths (adjust if needed)
+        JAVA_HOME = '/usr/lib/jvm/java-11-openjdk-amd64'  // Adjust based on your system
         MAVEN_HOME = '/usr/local/maven'  // Set the path to Maven if needed
-        JAVA_HOME = '/usr/lib/jvm/java-11-openjdk-amd64'  // Set the path to Java (update based on your system)
+
+        // Ensure the PATH variable includes Maven and Java binaries
+        PATH = "${JAVA_HOME}/bin:${MAVEN_HOME}/bin:${env.PATH}"
+    }
+
+    tools {
+        // Ensure to specify Maven and JDK if configured globally in Jenkins
+        jdk 'OpenJDK 11'  // This should match your Global Tool Configuration name
+        maven 'Maven 3.6.3'  // This should match your Global Tool Configuration name
     }
 
     stages {
