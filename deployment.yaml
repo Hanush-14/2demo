@@ -1,0 +1,30 @@
+Deployment on Kubernetes
+
+minikube start
+nano deployment.yaml
+ApiVersion: apps/v1
+kind: Deployment
+metadata:
+name: my-spring-app-deployment
+spec:
+replicas: 2
+selector:
+matchLabels:
+app: my-spring-app
+template:
+metadata:
+labels:
+app: my-spring-app
+spec:
+containers:
+- name: my-spring-app
+image: mahendrasimha0403/my-spring-app:latest
+ports:
+- containerPort: 8081
+kubectl apply -f deployment.yaml
+kubectl get deployments
+kubectl get pods
+kubectl logs <pod-name>
+kubectl expose deployment my-spring-app-deployment --type=NodePort –port=8081
+kubectl get svc
+minikube service my-spring-app-deployment
